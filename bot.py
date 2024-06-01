@@ -51,7 +51,12 @@ def run_bot():
         urllib.request.urlretrieve(image_url, "img.png")
         await interaction.channel.send(content=f"Image for {text}", file=discord.File("img.png"))
 
-    # SYNC
+        # USE APEX TRACKER TO GET INFO
+        @tree.command(name="apex_stats")
+        @app_commands.describe(text="Enter origin username")
+        async def generate_image(interaction: discord.Interaction, text: str):
+            await interaction.response.send_message("Gathering Info...")
+
     @tree.command(name="sync", description= 'Owner only')
     async def sync(interaction: discord.Interaction):
         if interaction.user.id == OWNER:
