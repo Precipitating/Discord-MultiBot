@@ -4,7 +4,7 @@ import os
 import discord
 import openai
 import requests
-from discord import app_commands
+from discord import app_commands, embeds
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -63,16 +63,53 @@ def run_bot():
             toJson = response.json()
             basicStats = toJson['global']
             realtimeStats = toJson['realtime']
-            await interaction.response.send_message(f"Name: {name} \n"
-                                                    f"Level: {basicStats['level']} \n"
-                                                    f"Banned?: {basicStats['bans']['isActive']} \n"
-                                                    f"Rank: {basicStats['rank']['rankName']} {basicStats['rank']['rankDiv']} \n"
-                                                    f"Status: {realtimeStats['currentState']} \n"
-                                                    )
+
+            embed = discord.Embed(title="Player Statistics", description="", colour=discord.Colour.random())
+            # Name
+            embed.add_field(name=f"`Name:` {name}  ", value="", inline=False)
+            # Level
+            embed.add_field(name=f"`Level:` {basicStats['level']} ", value="", inline=False)
+            # Bans
+            embed.add_field(name=f"`Banned:` {basicStats['bans']['isActive']}", value="", inline=False)
+            embed.add_field(name=f"`Last Ban Reason:` {basicStats['bans']['last_banReason']}", value="", inline=False)
+            # Rank
+            embed.add_field(name=f"`Rank:` {basicStats['rank']['rankName']} {basicStats['rank']['rankDiv']}", value="", inline=False)
+            # Status
+            embed.add_field(name=f"`Status:` {realtimeStats['currentState']}", value="", inline=False)
+
+            await interaction.response.send_message(embed=embed)
 
         else:
             await interaction.response.send_message("Data failed to collect."
                                                     "Ensure correct information is submitted & try again")
+
+    # GET APEX MAP ROTATION DATA
+    @tree.command(name="apex_map_rotation", description="Gathers apex map rotation")
+    async def apex_map_rotation(interaction: discord.Interaction):
+        response = requests.get(
+            f"https://api.mozambiquehe.re/maprotation?auth={APEXKEY}", params={'version': 2})
+        if response.status_code == 200:
+            toJson = response.json()
+            battleRoyaleData = toJson['battle_royale']
+            rankedData = toJson['ranked']
+
+            embed = discord.Embed(title="Apex Legends Map Rotation", description="", colour=discord.Colour.random())
+            # Battle Royale
+            embed.add_field(name="BATTLE ROYALE:", value="", inline=False)
+            embed.add_field(name="Current Map: ", value=f"{battleRoyaleData['current']['map']}")
+            embed.add_field(name="Next Map: ", value=f"{battleRoyaleData['next']['map']}", inline=True)
+            embed.add_field(name="Remaining Time", value=f"{battleRoyaleData['current']['remainingTimer']}", inline=False)
+            # Ranked
+            embed.add_field(name="RANKED:", value="", inline=False)
+            embed.add_field(name="Current Map:", value=f"{rankedData['current']['map']}")
+            embed.add_field(name="Next Map: ", value=f"{rankedData['next']['map']}", inline=True)
+            embed.add_field(name="Remaining Timer:", value=f"{rankedData['current']['remainingTimer']}", inline=False)
+
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("Map rotation failed to collect."
+                                                    "Try again in 5s.")
+
 
     @tree.command(name="sync", description='Owner only')
     async def sync(interaction: discord.Interaction):
