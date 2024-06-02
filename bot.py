@@ -7,6 +7,8 @@ import requests
 from discord import app_commands, embeds
 from dotenv import load_dotenv
 from openai import OpenAI
+import button_paginator as pg
+
 
 
 def run_bot():
@@ -111,6 +113,7 @@ def run_bot():
                                                     "Try again in 5s.")
 
 
+    # SYNC DATA
     @tree.command(name="sync", description='Owner only')
     async def sync(interaction: discord.Interaction):
         if interaction.user.id == OWNER:
@@ -118,5 +121,37 @@ def run_bot():
             await interaction.response.send_message("Synced")
         else:
             await interaction.response.send_message("Only the owner can use this command.")
+
+    # parse the definition and put it in a discord embed
+    def definition_to_list(toJson, definitionCount, word):
+        currentDefinition = ""
+        definitionToList = []
+        for i in range(definitionCount):
+            embed = discord.Embed(title=word, colour=discord.Colour.blue())
+            currentDefinition = toJson[i]['meanings'][0]['definitions'][0]['definition']
+            embed.add_field(name=currentDefinition, value="", inline=False)
+            definitionToList.append(embed)
+
+        return definitionToList
+
+
+    @tree.command(name="define", description='Get the definition of any word')
+    @app_commands.describe(word="Enter the word you want to know about")
+    async def define(interaction: discord.Interaction, word: str):
+        response = requests.get(
+            f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}")
+        if response.status_code == 200:
+            toJson = response.json()
+            # add all the definitions into a list of embeds
+            numberOfDefinitions = len(toJson)
+            definitionToList = definition_to_list(toJson, numberOfDefinitions, word)
+
+            # stick the list of embeds in a paginator, which can cycle through definitions easily
+            paginator = pg.Paginator(client, definitionToList, interaction)
+            paginator.default_pagination()
+            await paginator.start()
+            
+        else:
+            await interaction.response.send_message("Error, try again.")
 
     client.run(token=TOKEN)
