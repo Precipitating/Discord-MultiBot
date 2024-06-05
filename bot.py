@@ -1,5 +1,5 @@
 import urllib.request
-from typing import Final, List
+from typing import Final, List, Optional, Dict
 import os
 import discord
 import openai
@@ -62,6 +62,7 @@ def run_bot():
             print(img[-1])
         return img
 
+    # YANDEX COMMAND
     @tree.command(name="reverse_search")
     @app_commands.describe(image="Image to reverse")
     async def reverse_search(interaction: discord.Interaction, image: discord.Attachment):
@@ -71,14 +72,12 @@ def run_bot():
         result_link = yandex_result_link(image_bytes)
         images = get_similar_images(result_link)
 
-
         # embed the image links
         imageToEmbed = []
         for image in images:
             embed = discord.Embed(title="Image", description="", colour=discord.Colour.random())
             embed.set_image(url=image)
             imageToEmbed.append(embed)
-
 
         # put embeds in paginator
         paginator = pg.Paginator(client, imageToEmbed, interaction)
@@ -202,8 +201,77 @@ def run_bot():
             paginator = pg.Paginator(client, definitionToList, interaction)
             paginator.default_pagination()
             await paginator.start()
-
         else:
             await interaction.response.send_message("Error, try again.")
+
+    # EMBED A TWITTER POST WITH OPTIONAL ARGUMENTS
+    languages: List[Dict[str, str]] = [
+        {"name": "Arabic", "code": "ar"},
+        {"name": "Czech", "code": "cs"},
+        {"name": "Danish", "code": "da"},
+        {"name": "German", "code": "de"},
+        {"name": "Greek", "code": "el"},
+        {"name": "English", "code": "en"},
+        {"name": "Spanish", "code": "es"},
+        {"name": "French", "code": "fr"},
+        {"name": "Hindi", "code": "hi"},
+        {"name": "Hungarian", "code": "hu"},
+        {"name": "Indonesian", "code": "id"},
+        {"name": "Italian", "code": "it"},
+        {"name": "Japanese", "code": "ja"},
+        {"name": "Korean", "code": "ko"},
+        {"name": "Norwegian", "code": "no"},
+        {"name": "Dutch", "code": "nl"},
+        {"name": "Polish", "code": "pl"},
+        {"name": "Portuguese", "code": "pt"},
+        {"name": "Romanian", "code": "ro"},
+        {"name": "Russian", "code": "ru"},
+        {"name": "Swedish", "code": "sv"},
+        {"name": "Turkish", "code": "tr"},
+        {"name": "Chinese", "code": "h"}
+
+    ]
+    languageList: List[app_commands.Choice[str]] = []
+    for lang in languages:
+        languageList.append(app_commands.Choice(name=lang["name"], value=lang["code"]))
+
+    @tree.command(name="twitter_embed", description='Show twitter/X media via fxtwitter with optional args')
+    @app_commands.describe(link="Enter link")
+    @app_commands.describe(media_only="Media only?")
+    @app_commands.choices(translate=languageList)
+    async def twitter_embed(interaction: discord.Interaction,
+                            link: str,
+                            media_only: bool = None,
+                            translate: Optional[app_commands.Choice[str]] = None):
+
+        embedLink = "fxtwitter.com"
+        if "x.com" in link:
+            link = link.replace("x.com", embedLink)
+        elif "twitter.com" in link:
+            link = link.replace("twitter.com", embedLink)
+        else:
+            await interaction.response.send_message("Link is not a twitter/x link.")
+            return
+
+        # if translate checked, add it on
+        if translate is not None:
+            link += '/' + translate.value
+
+        # if we want the raw media, add it on
+        if media_only:
+            rawMedia = "d."
+            letterToFind = 'f'
+            link = link.replace(letterToFind, rawMedia + letterToFind, 1)
+
+        await interaction.response.send_message(link)
+
+
+
+
+
+
+
+
+
 
     client.run(token=TOKEN)
