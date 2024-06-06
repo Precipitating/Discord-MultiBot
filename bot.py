@@ -107,11 +107,14 @@ def run_bot():
 
     # USE APEX TRACKER TO GET BASIC STATS
     @tree.command(name="apex_stats", description="Gathers basic statistics for an apex user")
-    @app_commands.describe(platform="Enter platform (PC,PS4,X1)")
+    @app_commands.choices(platform=[app_commands.Choice(name="PC", value="PC"),
+                                    app_commands.Choice(name="Playstation", value="PS4"),
+                                    app_commands.Choice(name="Xbox", value="X1")
+                                    ])
     @app_commands.describe(name="Enter username")
-    async def apex_stats(interaction: discord.Interaction, platform: str, name: str):
+    async def apex_stats(interaction: discord.Interaction, platform: app_commands.Choice[str], name: str):
         response = requests.get(
-            f"https://api.mozambiquehe.re/bridge?auth={APEXKEY}&player={name}&platform={platform}")
+            f"https://api.mozambiquehe.re/bridge?auth={APEXKEY}&player={name}&platform={platform.value}")
         if response.status_code == 200:
             toJson = response.json()
             basicStats = toJson['global']
