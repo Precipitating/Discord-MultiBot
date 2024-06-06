@@ -267,11 +267,18 @@ def run_bot():
 
 
 
+    # EMBED TIKTOK VIDEOS
+    @tree.command(name="tiktok_embed", description='Embed videos for discord')
+    @app_commands.describe(link="Enter link")
+    async def twitter_embed(interaction: discord.Interaction,
+                            link: str):
+        embedLink = "vxtiktok.com"
+        if "tiktok.com" in link:
+            link = link.replace("tiktok.com", embedLink)
+        else:
+            await interaction.response.send_message("Link is not a tiktok.")
+            return
 
-
-
-
-
-
+        await interaction.response.send_message(link)
 
     client.run(token=TOKEN)
