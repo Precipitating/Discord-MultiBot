@@ -4,12 +4,13 @@ import os
 import discord
 import openai
 import requests
-from discord import app_commands, embeds
+from discord import app_commands
 from dotenv import load_dotenv
 from openai import OpenAI
 import button_paginator as pg
-import json
-from bs4 import BeautifulSoup
+import yandex
+import definition
+import twitter_embedder
 
 
 def run_bot():
@@ -33,57 +34,24 @@ def run_bot():
         print("Multibot running")
 
     # REVERSE AN IMAGE VIA YANDEX AND RETURN SIMILAR IMAGES
-
-    # get yandex link
-    def yandex_result_link(image_bytes: bytes) -> str:
-        search_url = 'https://yandex.ru/images/search'
-        files = {'upfile': ('blob', image_bytes, 'image/jpeg')}
-        params = {'rpt': 'imageview', 'format': 'json',
-                  'request': '{"blocks":[{"block":"b-page_type_search-by-image__link"}]}'}
-        response = requests.post(search_url, params=params, files=files)
-        query_string = json.loads(response.content)['blocks'][0]['params']['url']
-        img_search_url = search_url + '?' + query_string
-        print(img_search_url)
-        return img_search_url
-
-    # scrape the "site" section to get similar images
-    def get_similar_images(targetLink: str) -> List[str]:
-        page = requests.get(targetLink)
-        soup = BeautifulSoup(page.text, "html.parser")
-        similar_image_section = soup.find_all("img", class_="MMImage Thumb-Image")
-        img: list[str] = []
-
-        for icon in similar_image_section:
-            imgLink = icon.get('src')
-            if not imgLink.startswith("https://"):
-                img.append("https:" + imgLink)
-            else:
-                img.append(imgLink)
-            print(img[-1])
-        return img
-
     # YANDEX COMMAND
     @tree.command(name="reverse_search")
     @app_commands.describe(image="Image to reverse")
     async def reverse_search(interaction: discord.Interaction, image: discord.Attachment):
         # this command needs to execute within 3 seconds, or it will fail. defer it, so we have more time.
         await interaction.response.defer()
+        # read bytes of image
         image_bytes = await image.read()
-        result_link = yandex_result_link(image_bytes)
-        images = get_similar_images(result_link)
+        result_link = yandex.result_link(image_bytes)
+        images = yandex.get_similar_images(result_link)
 
-        # embed the image links
-        imageToEmbed = []
-        for image in images:
-            embed = discord.Embed(title="Image", description="", colour=discord.Colour.random())
-            embed.set_image(url=image)
-            imageToEmbed.append(embed)
+        # put the image links into a discord embed
+        imageToEmbed = yandex.image_embedder(images)
 
-        # put embeds in paginator
+        # put embeds in paginator and send message
         paginator = pg.Paginator(client, imageToEmbed, interaction)
         paginator.default_pagination()
         await paginator.start(deferred=True)
-        print("success")
 
     # USE OPENAI TO GENERATE AN IMAGE
     @tree.command(name="generate_image", description="Owner only")
@@ -103,7 +71,6 @@ def run_bot():
             await interaction.channel.send(content=f"Image for {text}", file=discord.File("img.png"))
         else:
             await interaction.response.send_message("Owner only")
-
 
     # USE APEX TRACKER TO GET BASIC STATS
     @tree.command(name="apex_stats", description="Gathers basic statistics for an apex user")
@@ -129,7 +96,8 @@ def run_bot():
             embed.add_field(name=f"`Banned:` {basicStats['bans']['isActive']}", value="", inline=False)
             embed.add_field(name=f"`Last Ban Reason:` {basicStats['bans']['last_banReason']}", value="", inline=False)
             # Rank
-            embed.add_field(name=f"`Rank:` {basicStats['rank']['rankName']} {basicStats['rank']['rankDiv']}", value="", inline=False)
+            embed.add_field(name=f"`Rank:` {basicStats['rank']['rankName']} {basicStats['rank']['rankDiv']}", value="",
+                            inline=False)
             # Status
             embed.add_field(name=f"`Status:` {realtimeStats['currentState']}", value="", inline=False)
 
@@ -154,7 +122,8 @@ def run_bot():
             embed.add_field(name="BATTLE ROYALE:", value="", inline=False)
             embed.add_field(name="Current Map: ", value=f"{battleRoyaleData['current']['map']}")
             embed.add_field(name="Next Map: ", value=f"{battleRoyaleData['next']['map']}", inline=True)
-            embed.add_field(name="Remaining Time", value=f"{battleRoyaleData['current']['remainingTimer']}", inline=False)
+            embed.add_field(name="Remaining Time", value=f"{battleRoyaleData['current']['remainingTimer']}",
+                            inline=False)
             # Ranked
             embed.add_field(name="RANKED:", value="", inline=False)
             embed.add_field(name="Current Map:", value=f"{rankedData['current']['map']}")
@@ -166,7 +135,6 @@ def run_bot():
             await interaction.response.send_message("Map rotation failed to collect."
                                                     "Try again in 5s.")
 
-
     # SYNC DATA
     @tree.command(name="sync", description='Owner only')
     async def sync(interaction: discord.Interaction):
@@ -175,18 +143,6 @@ def run_bot():
             await interaction.response.send_message("Synced")
         else:
             await interaction.response.send_message("Only the owner can use this command.")
-
-    # parse the definition and put it in a discord embed
-    def definition_to_list(toJson, definitionCount, word):
-        currentDefinition = ""
-        definitionToList = []
-        for i in range(definitionCount):
-            embed = discord.Embed(title=word, colour=discord.Colour.blue())
-            currentDefinition = toJson[i]['meanings'][0]['definitions'][0]['definition']
-            embed.add_field(name=currentDefinition, value="", inline=False)
-            definitionToList.append(embed)
-
-        return definitionToList
 
     # DEFINE A WORD
     @tree.command(name="define", description='Get the definition of any word')
@@ -198,7 +154,7 @@ def run_bot():
             toJson = response.json()
             # add all the definitions into a list of embeds
             numberOfDefinitions = len(toJson)
-            definitionToList = definition_to_list(toJson, numberOfDefinitions, word)
+            definitionToList = definition.to_list(toJson, numberOfDefinitions, word)
 
             # stick the list of embeds in a paginator, which can cycle through definitions easily
             paginator = pg.Paginator(client, definitionToList, interaction)
@@ -208,35 +164,9 @@ def run_bot():
             await interaction.response.send_message("Error, try again.")
 
     # EMBED A TWITTER POST WITH OPTIONAL ARGUMENTS
-    languages: List[Dict[str, str]] = [
-        {"name": "Arabic", "code": "ar"},
-        {"name": "Czech", "code": "cs"},
-        {"name": "Danish", "code": "da"},
-        {"name": "German", "code": "de"},
-        {"name": "Greek", "code": "el"},
-        {"name": "English", "code": "en"},
-        {"name": "Spanish", "code": "es"},
-        {"name": "French", "code": "fr"},
-        {"name": "Hindi", "code": "hi"},
-        {"name": "Hungarian", "code": "hu"},
-        {"name": "Indonesian", "code": "id"},
-        {"name": "Italian", "code": "it"},
-        {"name": "Japanese", "code": "ja"},
-        {"name": "Korean", "code": "ko"},
-        {"name": "Norwegian", "code": "no"},
-        {"name": "Dutch", "code": "nl"},
-        {"name": "Polish", "code": "pl"},
-        {"name": "Portuguese", "code": "pt"},
-        {"name": "Romanian", "code": "ro"},
-        {"name": "Russian", "code": "ru"},
-        {"name": "Swedish", "code": "sv"},
-        {"name": "Turkish", "code": "tr"},
-        {"name": "Chinese", "code": "h"}
 
-    ]
-    languageList: List[app_commands.Choice[str]] = []
-    for lang in languages:
-        languageList.append(app_commands.Choice(name=lang["name"], value=lang["code"]))
+    # convert all language codes to selectable choices (discord.Choice)
+    languageList = twitter_embedder.list_to_choice_list()
 
     @tree.command(name="twitter_embed", description='Show twitter/X media via fxtwitter with optional args')
     @app_commands.describe(link="Enter link")
@@ -247,11 +177,13 @@ def run_bot():
                             media_only: bool = None,
                             translate: Optional[app_commands.Choice[str]] = None):
 
-        embedLink = "fxtwitter.com"
-        if "x.com" in link:
-            link = link.replace("x.com", embedLink)
-        elif "twitter.com" in link:
-            link = link.replace("twitter.com", embedLink)
+        twitterLink: Final[str] = "twitter.com"
+        xLink: Final[str] = "x.com"
+
+        if xLink in link:
+            link = link.replace(xLink, twitter_embedder.EMBED_LINK)
+        elif twitterLink in link:
+            link = link.replace(twitterLink, twitter_embedder.EMBED_LINK)
         else:
             await interaction.response.send_message("Link is not a twitter/x link.")
             return
@@ -268,16 +200,17 @@ def run_bot():
 
         await interaction.response.send_message(link)
 
-
-
     # EMBED TIKTOK VIDEOS
     @tree.command(name="tiktok_embed", description='Embed videos for discord')
     @app_commands.describe(link="Enter link")
     async def twitter_embed(interaction: discord.Interaction,
                             link: str):
-        embedLink = "vxtiktok.com"
-        if "tiktok.com" in link:
-            link = link.replace("tiktok.com", embedLink)
+
+        embedLink: Final[str] = "vxtiktok.com"
+        tiktokLink: Final[str] = "tiktok.com"
+
+        if tiktokLink in link:
+            link = link.replace(tiktokLink, embedLink)
         else:
             await interaction.response.send_message("Link is not a tiktok.")
             return
