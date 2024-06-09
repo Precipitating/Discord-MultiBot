@@ -11,6 +11,8 @@ import button_paginator as pg
 import yandex
 import definition
 import twitter_embedder
+import helper_functions
+import apply_filter
 
 
 def run_bot():
@@ -38,6 +40,11 @@ def run_bot():
     @tree.command(name="reverse_search")
     @app_commands.describe(image="Image to reverse")
     async def reverse_search(interaction: discord.Interaction, image: discord.Attachment):
+        # check if it's an image
+        if not helper_functions.is_image(image):
+            await interaction.response.send_message("Provide a valid image file (.png/.jpg)")
+            return
+
         # this command needs to execute within 3 seconds, or it will fail. defer it, so we have more time.
         await interaction.response.defer()
         # read bytes of image
@@ -69,6 +76,7 @@ def run_bot():
             image_url = response.data[0].url
             urllib.request.urlretrieve(image_url, "img.png")
             await interaction.channel.send(content=f"Image for {text}", file=discord.File("img.png"))
+            os.remove("img.png")
         else:
             await interaction.response.send_message("Owner only")
 
@@ -198,12 +206,12 @@ def run_bot():
             letterToFind = 'f'
             link = link.replace(letterToFind, rawMedia + letterToFind, 1)
 
-        await interaction.response.send_message(link)
+        await interaction.response.send_message("[Link]("+link+")")
 
     # EMBED TIKTOK VIDEOS
     @tree.command(name="tiktok_embed", description='Embed videos for discord')
     @app_commands.describe(link="Enter link")
-    async def twitter_embed(interaction: discord.Interaction,
+    async def tiktok_embed(interaction: discord.Interaction,
                             link: str):
 
         embedLink: Final[str] = "vxtiktok.com"
@@ -215,6 +223,36 @@ def run_bot():
             await interaction.response.send_message("Link is not a tiktok.")
             return
 
-        await interaction.response.send_message(link)
+        await interaction.response.send_message("[Link]("+link+")")
+
+    # APPLY A VARIETY OF FACE FILTERS
+    @tree.command(name="apply_face_filter", description='Apply filter to a humanoid face')
+    @app_commands.choices(choices=[
+        app_commands.Choice(name="MLG Shades", value='mlg.png'),
+        app_commands.Choice(name="Gandalf", value='gandalf.png')
+
+    ])
+    async def apply_face_filter(interaction: discord.Interaction,
+                                image: discord.Attachment,
+                                choices: app_commands.Choice[str]):
+
+        if not helper_functions.is_image(image):
+            await interaction.response.send_message("Provide a valid image file (.png/.jpg)")
+            return
+
+        # START
+        folderPath = 'filters/'
+        await interaction.response.defer()
+        toBytes = await image.read()
+        decodedImg = apply_filter.load_image(toBytes)
+        result = apply_filter.apply(decodedImg, folderPath + choices.value)
+
+        if not result:
+            await interaction.followup.send("Failed to detect faces, upload a better image.")
+        else:
+            await interaction.followup.send("Success!")
+
+
+
 
     client.run(token=TOKEN)
