@@ -1,7 +1,17 @@
 import cv2
 import cvzone
 import numpy as np
-from typing import Union
+from typing import Union, Final
+
+STACHE_Y_SIZE_MULTIPLIER: Final[float] = 0.5
+STACHE_X_MULTIPLIER: Final[float] = 0.75
+STACHE_Y_MULTIPLIER: Final[float] = 0.25
+
+GANDALF_X_SIZE_MULTIPLIER: Final[float] = 2.5
+GANDALF_Y_SIZE_MULTIPLIER: Final[float] = 2.5
+GANDALF_X_MULTIPLIER: Final[float] = -0.22
+GANDALF_Y_MULTIPLIER: Final[float] = -0.16
+
 
 
 def load_image(img: bytes) -> Union[np.ndarray, None]:
@@ -15,6 +25,25 @@ def load_image(img: bytes) -> Union[np.ndarray, None]:
 
     print(decodedImage.shape)
     return decodedImage
+
+
+# resize the image overlay to a suitable size and position it correctly
+def resize_and_position_landmark(overlay, img, box, landmarks, xSizeMultiplier=1.0, ySizeMultiplier=1.0,
+                                 xMultiplier=0.0,
+                                 yMultiplier=0.0):
+    overlay_resize = cv2.resize(overlay, (int(box[2]) * xSizeMultiplier, int(box[3] * ySizeMultiplier)))
+    # since origin is top left of image, we need to apply an offset, so it is positioned correctly.
+    # (nose landmark) - (overlay x/y size) * (multiplier calculated manually).
+    img = cvzone.overlayPNG(img, overlay_resize, [int(landmarks[4] - (overlay_resize.shape[0] * xMultiplier)),
+                                                  int(landmarks[5] - (overlay_resize.shape[1] * yMultiplier))])
+
+
+def resize_and_position_default(overlay, img, box, xSizeMultiplier=1.0, ySizeMultiplier=1.0,
+                                xMultiplier=0.0,
+                                yMultiplier=0.0):
+    overlay_resize = cv2.resize(overlay, (int(box[2] * xSizeMultiplier), int(box[3] * ySizeMultiplier)))
+    img = cvzone.overlayPNG(img, overlay_resize, [int(box[0] + (overlay_resize.shape[0] * xMultiplier)),
+                                                  int(box[1] + (overlay_resize.shape[1] * yMultiplier))])
 
 
 def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
@@ -34,18 +63,20 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
     for face in detections:
         # get the first 4 params, not interested in rest and put it into a list
         box = list(map(int, face[:4]))
+        landmarks = list(map(int, face[4:len(face) - 1]))
 
         cv2.rectangle(img, box, (0, 255, 0), 2)
-        if "gandalf" in selectedFilter:
-            overlay_resize = cv2.resize(overlay, (int(box[2] * 2), int(box[3] * 2)))
-            img = cvzone.overlayPNG(img, overlay_resize, [box[0]-100, box[1]-30])
+        if "stache" in selectedFilter:
+            resize_and_position_landmark(overlay, img, box, landmarks, 1, STACHE_Y_SIZE_MULTIPLIER, STACHE_X_MULTIPLIER,
+                                         STACHE_Y_MULTIPLIER)
+        elif "gandalf" in selectedFilter:
+            resize_and_position_default(overlay, img, box, GANDALF_X_SIZE_MULTIPLIER, GANDALF_Y_SIZE_MULTIPLIER, GANDALF_X_MULTIPLIER,
+                                        GANDALF_Y_MULTIPLIER)
         else:
             overlay_resize = cv2.resize(overlay, (box[2], box[3]))
             img = cvzone.overlayPNG(img, overlay_resize, [box[0], box[1]])
 
-
-
-    cv2.imshow('bruh', img)
+    cv2.imshow('Window', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 

@@ -229,7 +229,8 @@ def run_bot():
     @tree.command(name="apply_face_filter", description='Apply filter to a humanoid face')
     @app_commands.choices(choices=[
         app_commands.Choice(name="MLG Shades", value='mlg.png'),
-        app_commands.Choice(name="Gandalf", value='gandalf.png')
+        app_commands.Choice(name="Mustache", value='stache.png'),
+        app_commands.Choice(name="Gandalf", value='gandalf.png'),
 
     ])
     async def apply_face_filter(interaction: discord.Interaction,
