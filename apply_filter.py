@@ -65,7 +65,7 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
         box = list(map(int, face[:4]))
         landmarks = list(map(int, face[4:len(face) - 1]))
 
-        cv2.rectangle(img, box, (0, 255, 0), 2)
+       # cv2.rectangle(img, box, (0, 255, 0), 2)
         if "stache" in selectedFilter:
             resize_and_position_landmark(overlay, img, box, landmarks, 1, STACHE_Y_SIZE_MULTIPLIER, STACHE_X_MULTIPLIER,
                                          STACHE_Y_MULTIPLIER)
@@ -76,8 +76,13 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
             overlay_resize = cv2.resize(overlay, (box[2], box[3]))
             img = cvzone.overlayPNG(img, overlay_resize, [box[0], box[1]])
 
+    save_image(img)
+
     cv2.imshow('Window', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     return True
+
+def save_image(img):
+    cv2.imwrite('filtered_img.png', img)
