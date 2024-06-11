@@ -231,6 +231,9 @@ def run_bot():
         app_commands.Choice(name="MLG Shades", value='mlg.png'),
         app_commands.Choice(name="Mustache", value='stache.png'),
         app_commands.Choice(name="Gandalf", value='gandalf.png'),
+        app_commands.Choice(name="Robber Mask", value='robber.png'),
+        app_commands.Choice(name="Medieval Helmet", value='medieval.png'),
+        app_commands.Choice(name="Chill Face", value='chill.png')
 
     ])
     async def apply_face_filter(interaction: discord.Interaction,
