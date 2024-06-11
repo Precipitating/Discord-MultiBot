@@ -90,7 +90,6 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
         leftEye = [landmarks[0], landmarks[1]]
 
         # cv2.rectangle(img, box, (0, 255, 0), 2)
-        cv2.circle(img, leftEye,2, (0, 255, 0), 2)
 
         if "stache" in selectedFilter:
             resize_and_position_landmark(overlay, img, box, nose, 1, STACHE_Y_SIZE_MULTIPLIER,
