@@ -14,6 +14,7 @@ import twitter_embedder
 import helper_functions
 import apply_filter
 import video_tools
+import yt_downloader
 
 
 def run_bot():
@@ -258,6 +259,7 @@ def run_bot():
             await interaction.followup.send(file=discord.File('filtered_img.png'))
             os.remove("filtered_img.png")
 
+    # SIMPLE VIDEO EDITING
     @tree.command(name="video_tool", description='Do some simple video editing on a supplied video')
     @app_commands.describe(audio="Add a valid audio format to apply to the video chosen (if adding background music)")
     @app_commands.choices(choices=[
@@ -275,8 +277,6 @@ def run_bot():
             await interaction.response.send_message("Provide a valid video file (.mp4/.avi/.webm/.mov)")
             return
 
-
-
         # save attachment for processing
         downloadPath = "videos/" + video.filename
         audioDownloadPath = "bgm/" + audio.filename
@@ -285,7 +285,6 @@ def run_bot():
 
         if choices.value == 2 and audio is not None:
             await audio.save(audioDownloadPath)
-
 
         # START
         await interaction.response.defer()
@@ -302,5 +301,47 @@ def run_bot():
         os.remove(downloadPath)
         if choices.value == 2:
             os.remove(audioDownloadPath)
+
+    # YOUTUBE DOWNLOADER
+    @tree.command(name="youtube", description='Do some youtube conversion (wont work on large durations)')
+    @app_commands.describe(link="Youtube URL")
+    @app_commands.choices(choices=[
+        app_commands.Choice(name="To MP4", value=1),
+        app_commands.Choice(name="To MP3", value=2)
+    ])
+    async def youtube(interaction: discord.Interaction,
+                      link: str,
+                      choices: app_commands.Choice[int]
+                      ):
+
+        # make sure it's a youtube link
+        if not link.startswith("https://www.youtube.com") or link.startswith("youtube.com"):
+            await interaction.response.send_message("Provide a valid youtube link")
+            return
+
+        result = None
+
+        # START
+        await interaction.response.defer()
+        if choices.value == 1:
+            result = yt_downloader.install_mp4(link)
+        elif choices.value == 2:
+            result = yt_downloader.install_mp3(link)
+
+        if not result:
+            await interaction.followup.send("Error, either age restricted or the video is too long")
+            return
+
+        if isinstance(result, str):
+            print("RETURN TYPE IS STRING")
+            await interaction.followup.send(result)
+            os.remove(yt_downloader.OUTPUT_PATH + "output.mp4")
+        else:
+            if choices.value == 1:
+                await interaction.followup.send(file=discord.File(yt_downloader.OUTPUT_PATH + "output.mp4"))
+                os.remove(yt_downloader.OUTPUT_PATH + "output.mp4")
+            else:
+                await interaction.followup.send(file=discord.File(yt_downloader.OUTPUT_PATH + "output.mp3"))
+                os.remove(yt_downloader.OUTPUT_PATH + "output.mp3")
 
     client.run(token=TOKEN)
