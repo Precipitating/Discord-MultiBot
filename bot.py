@@ -1,5 +1,5 @@
 import urllib.request
-from typing import Final, List, Optional, Dict
+from typing import Final, Optional
 import os
 import discord
 import openai
@@ -13,6 +13,7 @@ import definition
 import twitter_embedder
 import helper_functions
 import apply_filter
+import video_tools
 
 
 def run_bot():
@@ -206,13 +207,13 @@ def run_bot():
             letterToFind = 'f'
             link = link.replace(letterToFind, rawMedia + letterToFind, 1)
 
-        await interaction.response.send_message("[Link]("+link+")")
+        await interaction.response.send_message("[Link](" + link + ")")
 
     # EMBED TIKTOK VIDEOS
     @tree.command(name="tiktok_embed", description='Embed videos for discord')
     @app_commands.describe(link="Enter link")
     async def tiktok_embed(interaction: discord.Interaction,
-                            link: str):
+                           link: str):
 
         embedLink: Final[str] = "vxtiktok.com"
         tiktokLink: Final[str] = "tiktok.com"
@@ -223,7 +224,7 @@ def run_bot():
             await interaction.response.send_message("Link is not a tiktok.")
             return
 
-        await interaction.response.send_message("[Link]("+link+")")
+        await interaction.response.send_message("[Link](" + link + ")")
 
     # APPLY A VARIETY OF FACE FILTERS
     @tree.command(name="apply_face_filter", description='Apply filter to a humanoid face')
@@ -257,10 +258,49 @@ def run_bot():
             await interaction.followup.send(file=discord.File('filtered_img.png'))
             os.remove("filtered_img.png")
 
+    @tree.command(name="video_tool", description='Do some simple video editing on a supplied video')
+    @app_commands.describe(audio="Add a valid audio format to apply to the video chosen (if adding background music)")
+    @app_commands.choices(choices=[
+        app_commands.Choice(name="Extract audio", value=1),
+        app_commands.Choice(name="Add background music", value=2),
+        app_commands.Choice(name="Remove audio", value=3)
+    ])
+    async def video_tool(interaction: discord.Interaction,
+                         video: discord.Attachment,
+                         choices: app_commands.Choice[int],
+                         audio: discord.Attachment = None):
+
+        # make sure its a valid format
+        if not helper_functions.is_video(video):
+            await interaction.response.send_message("Provide a valid video file (.mp4/.avi/.webm/.mov)")
+            return
 
 
 
+        # save attachment for processing
+        downloadPath = "videos/" + video.filename
+        audioDownloadPath = "bgm/" + audio.filename
+        outputPath = "videooutput/" + video.filename
+        await video.save(downloadPath)
+
+        if choices.value == 2 and audio is not None:
+            await audio.save(audioDownloadPath)
 
 
+        # START
+        await interaction.response.defer()
+        if choices.value == 1:
+            outputPath = video_tools.extract_audio(downloadPath, outputPath)
+        elif choices.value == 2:
+            video_tools.bgm_add(downloadPath, audioDownloadPath, outputPath)
+        elif choices.value == 3:
+            video_tools.remove_audio(downloadPath, outputPath)
+
+        await interaction.followup.send(file=discord.File(outputPath))
+
+        os.remove(outputPath)
+        os.remove(downloadPath)
+        if choices.value == 2:
+            os.remove(audioDownloadPath)
 
     client.run(token=TOKEN)
