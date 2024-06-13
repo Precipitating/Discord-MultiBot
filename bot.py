@@ -15,6 +15,7 @@ import helper_functions
 import apply_filter
 import video_tools
 import yt_downloader
+import twitter_downloader
 
 
 def run_bot():
@@ -343,5 +344,27 @@ def run_bot():
             else:
                 await interaction.followup.send(file=discord.File(yt_downloader.OUTPUT_PATH + "output.mp3"))
                 os.remove(yt_downloader.OUTPUT_PATH + "output.mp3")
+
+    @tree.command(name="twitter_download", description='Download twitter/X videos')
+    @app_commands.describe(link="Enter link")
+    async def twitter_download(interaction: discord.Interaction,
+                               link: str):
+
+        xLink: Final[str] = "https://twitter.com"
+        twitterLink: Final[str] = "https://x.com"
+
+        await interaction.response.defer()
+        if link.startswith(xLink) or link.startswith(twitterLink):
+            result = twitter_downloader.download(link)
+        else:
+            await interaction.response.send_message("Link is not twitter")
+            return
+
+        if not result:
+            await interaction.followup.send("Twitter link has no video")
+            return
+
+        await interaction.followup.send(file=discord.File(twitter_downloader.DOWNLOAD_PATH))
+        os.remove(twitter_downloader.DOWNLOAD_PATH)
 
     client.run(token=TOKEN)
