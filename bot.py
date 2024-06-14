@@ -326,7 +326,7 @@ def run_bot():
         # START
         await interaction.response.defer()
         if choices.value == 1:
-            result = yt_downloader.install_mp4(link)
+            result = await yt_downloader.install_mp4(link)
         elif choices.value == 2:
             result = yt_downloader.install_mp3(link, yt_downloader.OUTPUT_PATH)
 
@@ -380,6 +380,8 @@ def run_bot():
         # discord embed object if success, else None
         embed = None
         filePath = None
+
+        # START
         await interaction.response.defer()
         # return an error msg if no files provided
         if link is None and file is None:
@@ -404,21 +406,20 @@ def run_bot():
             await file.save(filePath)
             # identify song
             embed = await shazam_functions.file_shazam(filePath)
-            if embed is None:
-                await interaction.followup.send("Cannot identify this song.")
-                return
+
         # if link is given ONLY
         elif link is not None and file is None:
-            # install youtube video to mp3
+            # YouTube -> mp3 to videosoutput folder
             if yt_downloader.install_mp3(link, shazam_functions.DOWNLOAD_PATH):
                 filePath = shazam_functions.DOWNLOAD_PATH + "output.mp3"
-                # process same as local file
+                # reuse same function as file
                 embed = await shazam_functions.file_shazam(filePath)
-                if embed is None:
-                    await interaction.followup.send("Cannot identify this song.")
-                    return
         else:
             await interaction.followup.send("Only put ONE attachment")
+            return
+
+        if embed is None:
+            await interaction.followup.send("Cannot identify this song.")
             return
 
         await interaction.followup.send(embed=embed)

@@ -1,21 +1,22 @@
+import asyncio
+import aiohttp
 import pytube.exceptions
-import responses
 from pytubefix import YouTube
 from typing import Final
-import requests
 
 DISCORD_MAX_FILE_SIZE_MB: Final[int] = 25
 LITTERBOX_UPLOAD_LIMIT: Final[int] = 1000
 OUTPUT_PATH: Final[str] = "videooutput/"
 OUTPUT_NAME: Final[str] = "output"
 HOST_API: Final[str] = "https://litterbox.catbox.moe/resources/internals/api.php"
+TIMEOUT_DURATION: Final[int] = 180 # in seconds
 
 
 # return types:
 # NONE = failed to download or host video - ERROR
 # True = downloaded video, under 25mb and can send video directly to discord - DOWNLOAD -> SEND
 # string = url of a hosted video over 25mb - DOWNLOAD -> HOST
-def install_mp4(link: str):
+async def install_mp4(link: str):
     toYT = YouTube(link)
 
     # get video
@@ -23,6 +24,7 @@ def install_mp4(link: str):
         vid = toYT.streams.get_highest_resolution()
         vid.download(filename=OUTPUT_NAME+'.mp4', output_path=OUTPUT_PATH)
         print("mp4 downloaded")
+
     except pytube.exceptions.AgeRestrictedError:
         print("age restricted video")
         return None
@@ -33,22 +35,28 @@ def install_mp4(link: str):
     if DISCORD_MAX_FILE_SIZE_MB < fileSize < LITTERBOX_UPLOAD_LIMIT:
         print("Over 25mb, trying alternative method:")
         with open(OUTPUT_PATH + OUTPUT_NAME+'.mp4', 'rb') as file:
-            files = {
-                'reqtype': (None, 'fileupload'),
-                'time': (None, '1h'),
-                'fileToUpload': file
-            }
             # will take a while to upload the video depending on how big it is
-            response = requests.post(HOST_API, files=files)
-
-            if response.status_code == 200:
-                # url to the hosted video
-                return response.text
-            else:
-                print("api failed to upload")
+            # use asyncio, so it doesn't block discord's heartbeat
+            data = aiohttp.FormData()
+            data.add_field('reqtype', 'fileupload')
+            data.add_field('time', '1h')
+            data.add_field('fileToUpload', file, filename='output.mp4',
+                           content_type='video/mp4')
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url=HOST_API, data=data, timeout=TIMEOUT_DURATION) as r:
+                        if r.status == 200:
+                            return await r.text()
+                        else:
+                            print("api failed to upload to litterbox")
+                            return None
+            except asyncio.TimeoutError:
+                print("took too long to upload to server")
                 return None
 
+
     # if we're here, then no need to host, send file directly
+    print("no need to host, send locally")
     return True
 
 
