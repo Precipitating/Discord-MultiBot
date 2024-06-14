@@ -7,6 +7,7 @@ import requests
 DISCORD_MAX_FILE_SIZE_MB: Final[int] = 25
 LITTERBOX_UPLOAD_LIMIT: Final[int] = 1000
 OUTPUT_PATH: Final[str] = "videooutput/"
+OUTPUT_NAME: Final[str] = "output"
 HOST_API: Final[str] = "https://litterbox.catbox.moe/resources/internals/api.php"
 
 
@@ -20,7 +21,7 @@ def install_mp4(link: str):
     # get video
     try:
         vid = toYT.streams.get_highest_resolution()
-        vid.download(filename="output.mp4", output_path=OUTPUT_PATH)
+        vid.download(filename=OUTPUT_NAME+'.mp4', output_path=OUTPUT_PATH)
         print("mp4 downloaded")
     except pytube.exceptions.AgeRestrictedError:
         print("age restricted video")
@@ -31,7 +32,7 @@ def install_mp4(link: str):
     # if over 25mb and under 1gb, we can host this
     if DISCORD_MAX_FILE_SIZE_MB < fileSize < LITTERBOX_UPLOAD_LIMIT:
         print("Over 25mb, trying alternative method:")
-        with open(OUTPUT_PATH + "output.mp4", 'rb') as file:
+        with open(OUTPUT_PATH + OUTPUT_NAME+'.mp4', 'rb') as file:
             files = {
                 'reqtype': (None, 'fileupload'),
                 'time': (None, '1h'),
@@ -51,8 +52,8 @@ def install_mp4(link: str):
     return True
 
 
-def install_mp3(link: str):
+def install_mp3(link: str, outputPath: str):
     toYT = YouTube(link)
     vid = toYT.streams.get_audio_only()
-    vid.download(output_path=OUTPUT_PATH, filename="output", mp3=True)
+    vid.download(output_path=outputPath, filename=f"{OUTPUT_NAME}", mp3=True)
     return True

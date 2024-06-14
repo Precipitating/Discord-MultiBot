@@ -16,6 +16,7 @@ import apply_filter
 import video_tools
 import yt_downloader
 import twitter_downloader
+import shazam_functions
 
 
 def run_bot():
@@ -315,8 +316,8 @@ def run_bot():
                       choices: app_commands.Choice[int]
                       ):
 
-        # make sure it's a youtube link
-        if not link.startswith("https://www.youtube.com") or link.startswith("youtube.com"):
+        # make sure it's a YouTube link
+        if not helper_functions.is_youtube_link(link):
             await interaction.response.send_message("Provide a valid youtube link")
             return
 
@@ -327,16 +328,18 @@ def run_bot():
         if choices.value == 1:
             result = yt_downloader.install_mp4(link)
         elif choices.value == 2:
-            result = yt_downloader.install_mp3(link)
+            result = yt_downloader.install_mp3(link, yt_downloader.OUTPUT_PATH)
 
         if not result:
             await interaction.followup.send("Error, either age restricted or the video is too long")
             return
 
+        # if hosting video to site is success, send url
         if isinstance(result, str):
             print("RETURN TYPE IS STRING")
             await interaction.followup.send(result)
             os.remove(yt_downloader.OUTPUT_PATH + "output.mp4")
+        # else send the local file directly to discord and delete after
         else:
             if choices.value == 1:
                 await interaction.followup.send(file=discord.File(yt_downloader.OUTPUT_PATH + "output.mp4"))
@@ -366,5 +369,59 @@ def run_bot():
 
         await interaction.followup.send(file=discord.File(twitter_downloader.DOWNLOAD_PATH))
         os.remove(twitter_downloader.DOWNLOAD_PATH)
+
+    @tree.command(name="shazam", description='Attempts to identify music via file/YTlink')
+    @app_commands.describe(link="Enter link")
+    @app_commands.describe(file="Audio file")
+    async def shazam(interaction: discord.Interaction,
+                     link: str = None,
+                     file: discord.Attachment = None):
+
+        # discord embed object if success, else None
+        embed = None
+        filePath = None
+        await interaction.response.defer()
+        # return an error msg if no files provided
+        if link is None and file is None:
+            await interaction.followup.send("Provide a file/link")
+            return
+
+        # early exit if audio file format/link is bad
+        if file is not None or link is not None:
+            if file is not None:
+                if helper_functions.is_audio(file) is False:
+                    await interaction.followup.send("Not a valid audio file")
+                    return
+            elif link is not None:
+                if not helper_functions.is_youtube_link(link):
+                    await interaction.followup.send("Not a YouTube link")
+                    return
+
+        # if audio file supplied and ONLY one attachment is given
+        if file is not None and link is None:
+            # save audio file
+            filePath = shazam_functions.DOWNLOAD_PATH + file.filename
+            await file.save(filePath)
+            # identify song
+            embed = await shazam_functions.file_shazam(filePath)
+            if embed is None:
+                await interaction.followup.send("Cannot identify this song.")
+                return
+        # if link is given ONLY
+        elif link is not None and file is None:
+            # install youtube video to mp3
+            if yt_downloader.install_mp3(link, shazam_functions.DOWNLOAD_PATH):
+                filePath = shazam_functions.DOWNLOAD_PATH + "output.mp3"
+                # process same as local file
+                embed = await shazam_functions.file_shazam(filePath)
+                if embed is None:
+                    await interaction.followup.send("Cannot identify this song.")
+                    return
+        else:
+            await interaction.followup.send("Only put ONE attachment")
+            return
+
+        await interaction.followup.send(embed=embed)
+        os.remove(filePath)
 
     client.run(token=TOKEN)

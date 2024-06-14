@@ -25,6 +25,17 @@ def is_audio(file: discord.Attachment):
     else:
         return False
 
+def is_youtube_link(link: str):
+    if link.startswith("https://www.youtube.com") or link.startswith("youtube.com"):
+        return True
+    else:
+        return False
+
+
+
+
+
+
 
 
 def extract_file_format(file: str):
