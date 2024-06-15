@@ -44,7 +44,7 @@ The Twitter option has a few more parameters that can be used to translate the t
 
 ### TikTok TTS:
 **Generates a text-to-speech mp3 file to Discord, using popular TikTok TTS models**\
-Uses [this](https://tiktok-tts.weilbyte.dev/) website's API to do this simply\
+Uses [this](https://tiktok-tts.weilbyte.dev/) website's API to do this simply
 
 ### Generate Image via Dall-E:
 **Generates any image through the input prompt, but is for me only, as the API costs money**\
