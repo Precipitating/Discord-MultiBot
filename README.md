@@ -51,16 +51,16 @@ Uses [this](https://tiktok-tts.weilbyte.dev/) website's API to do this simply
 **Generates any image through the input prompt, but is for me only, as the API costs money**\
 Downloads the image locally, sends to Discord channel, and deletes it.
 
-### Apex Legends Stats
+### Apex Legends Stats:
 **Returns Apex Legends map rotation and user statistics**\
 Uses [this](https://apexlegendsapi.com/) API to get the data \
 Relevant parameters such as platform and user name added for API to work
 
-### Video Tool
+### Video Tool:
 **Does very simple video editing via MoviePY**\
 Can remove background audio, add background music overlay, and extract audio from a video.
 
-### Define a word
+### Define a word:
 **Defines a word using [this](https://dictionaryapi.dev/) API**\
 Self explanatory, wants a Discord input, gives the result.
 
