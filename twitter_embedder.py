@@ -1,5 +1,4 @@
 from typing import Dict, List, Final
-from discord import app_commands
 
 
 EMBED_LINK: Final[str] = "fxtwitter.com"
@@ -31,9 +30,4 @@ languages: List[Dict[str, str]] = [
 ]
 
 
-def list_to_choice_list() -> List[app_commands.Choice[str]]:
-    languageList: List[app_commands.Choice[str]] = []
-    for lang in languages:
-        languageList.append(app_commands.Choice(name=lang["name"], value=lang["code"]))
 
-    return languageList

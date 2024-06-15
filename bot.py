@@ -4,6 +4,7 @@ import os
 import discord
 import openai
 import requests
+import responses
 from discord import app_commands
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -17,6 +18,7 @@ import video_tools
 import yt_downloader
 import twitter_downloader
 import shazam_functions
+import tiktok
 
 
 def run_bot():
@@ -41,7 +43,7 @@ def run_bot():
 
     # REVERSE AN IMAGE VIA YANDEX AND RETURN SIMILAR IMAGES
     # YANDEX COMMAND
-    @tree.command(name="reverse_search")
+    @tree.command(name="reverse_search", description="Applies image search via yandex and returns results")
     @app_commands.describe(image="Image to reverse")
     async def reverse_search(interaction: discord.Interaction, image: discord.Attachment):
         # check if it's an image
@@ -178,7 +180,7 @@ def run_bot():
     # EMBED A TWITTER POST WITH OPTIONAL ARGUMENTS
 
     # convert all language codes to selectable choices (discord.Choice)
-    languageList = twitter_embedder.list_to_choice_list()
+    languageList = helper_functions.list_to_choice_list(twitter_embedder.languages)
 
     @tree.command(name="twitter_embed", description='Show twitter/X media via fxtwitter with optional args')
     @app_commands.describe(link="Enter link")
@@ -424,5 +426,33 @@ def run_bot():
 
         await interaction.followup.send(embed=embed)
         os.remove(filePath)
+
+    # convert languages codes to tts
+    tiktokLangCodes = helper_functions.list_to_choice_list(tiktok.TIKTOK_VOICE_CODES)
+
+    @tree.command(name="tiktok_tts", description='Generate an MP3 of a voiceline using tiktok models')
+    @app_commands.describe(text="Input text")
+    @app_commands.choices(choices=tiktokLangCodes)
+    async def tiktok_tts(interaction: discord.Interaction, text: str, choices: app_commands.Choice[str]):
+        checkService = requests.get("https://tiktok-tts.weilbyte.dev/api/status")
+        if checkService.status_code != 200:
+            await interaction.response.send_message("API not available. Try again later")
+            return
+
+        reqBody = {
+            'text': text,
+            'voice': choices.value
+        }
+        generate_tts = requests.post("https://tiktok-tts.weilbyte.dev/api/generate", json=reqBody)
+        if generate_tts.status_code != 200:
+            await interaction.response.send_message("Error generating TTS")
+            return
+
+        savePath = "bgm/"+choices.value+"output.mp3"
+        with open(savePath, 'wb') as file:
+            file.write(generate_tts.content)
+
+        await interaction.response.send_message(file=discord.File(savePath))
+        os.remove(savePath)
 
     client.run(token=TOKEN)
