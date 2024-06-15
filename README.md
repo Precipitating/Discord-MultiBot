@@ -59,6 +59,9 @@ Relevant parameters such as platform and user name added for API to work
 **Does very simple video editing via MoviePY**\
 Can remove background audio, add background music overlay, and extract audio from a video.
 
+### Define a word
+**Defines a word using [this](https://dictionaryapi.dev/) API**\
+Self explanatory, wants a Discord input, gives the result.
 
 
 
