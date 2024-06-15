@@ -1,5 +1,5 @@
 import urllib.request
-from typing import Final, Optional
+from typing import Final, Optional, List
 import os
 import discord
 import openai
@@ -185,11 +185,11 @@ def run_bot():
     @tree.command(name="twitter_embed", description='Show twitter/X media via fxtwitter with optional args')
     @app_commands.describe(link="Enter link")
     @app_commands.describe(media_only="Media only?")
-    @app_commands.choices(translate=languageList)
+    @app_commands.choices(translate_it=languageList)
     async def twitter_embed(interaction: discord.Interaction,
                             link: str,
                             media_only: bool = None,
-                            translate: Optional[app_commands.Choice[str]] = None):
+                            translate_it: Optional[app_commands.Choice[str]] = None):
 
         twitterLink: Final[str] = "twitter.com"
         xLink: Final[str] = "x.com"
@@ -203,8 +203,8 @@ def run_bot():
             return
 
         # if translate checked, add it on
-        if translate is not None:
-            link += '/' + translate.value
+        if translate_it is not None:
+            link += '/' + translate_it.value
 
         # if we want the raw media, add it on
         if media_only:
@@ -261,7 +261,7 @@ def run_bot():
             await interaction.followup.send("Failed to detect faces, upload a better image.")
         else:
             await interaction.followup.send(file=discord.File('filtered_img.png'))
-            os.remove("filtered_img.png")
+            os.remove(apply_filter.IMG_PATH)
 
     # SIMPLE VIDEO EDITING
     @tree.command(name="video_tool", description='Do some simple video editing on a supplied video')
@@ -458,10 +458,34 @@ def run_bot():
     @tree.command(name="translate",
                   description='Translate text')
     @app_commands.describe(text="Input text")
-    async def translate(interaction: discord.Interaction, text: str):
+    @app_commands.describe(img="OR input image")
+    @app_commands.autocomplete(desired_lang=translator.lang_autocomplete)
+    async def translate(interaction: discord.Interaction, desired_lang: str, text: str = None,
+                        img: discord.Attachment = None):
         await interaction.response.defer()
-        result = translator.translate(text)
 
+        result = None
+        savePath = ""
+        # Catch errors early
+        if not (text is None) ^ (img is None):
+            await interaction.followup.send("Input either image or text, not both or none")
+            return
+
+        if text:
+            result = translator.translate(text, desired_lang)
+        elif img:
+            savePath = translator.IMG_PATH + img.filename
+            if helper_functions.is_image(img):
+                await img.save(savePath)
+                result = translator.extract_image_text(savePath, desired_lang)
+            else:
+                await interaction.followup.send("File is not an image (png/jpg/jpeg)")
+
+        else:
+            await interaction.followup.send("Unknown error")
+
+        if img:
+            os.remove(savePath)
         await interaction.followup.send(f"`Detected Language:`\n{result[0]}\n`Translation:`\n{result[1]}")
 
     client.run(token=TOKEN)

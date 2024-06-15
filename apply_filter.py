@@ -1,7 +1,6 @@
 import cv2
 import cvzone
 import numpy as np
-import math
 from typing import Union, Final
 
 STACHE_Y_SIZE_MULTIPLIER: Final[float] = 0.5
@@ -32,6 +31,8 @@ CHILL_X_SIZE_MULTIPLIER_MOUTH: Final[float] = 0.85
 CHILL_Y_SIZE_MULTIPLIER_MOUTH: Final[float] = 0.2
 CHILL_X_MULTIPLIER_MOUTH: Final[float] = -1.6
 CHILL_Y_MULTIPLIER_MOUTH: Final[float] = 0.1
+
+IMG_PATH: Final[str] = "img/filtered_img.png"
 
 
 
@@ -138,4 +139,4 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
 
 
 def save_image(img):
-    cv2.imwrite('filtered_img.png', img)
+    cv2.imwrite(IMG_PATH, img)
