@@ -131,9 +131,9 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
 
     save_image(img)
 
-    cv2.imshow('Window', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+   # cv2.imshow('Window', img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
     return True
 

@@ -260,7 +260,7 @@ def run_bot():
         if not result:
             await interaction.followup.send("Failed to detect faces, upload a better image.")
         else:
-            await interaction.followup.send(file=discord.File('filtered_img.png'))
+            await interaction.followup.send(file=discord.File(apply_filter.IMG_PATH))
             os.remove(apply_filter.IMG_PATH)
 
     # SIMPLE VIDEO EDITING
