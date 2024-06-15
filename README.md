@@ -1,5 +1,5 @@
-# A Discord bot full of various random tools which is useful to me.\ Uses slash commands.
-
+# A Discord bot full of various random tools which is useful to me.
+**Uses Slash Commands**
 ## Requires an .env with these API variables:
 DISCORD_TOKEN,\
 OWNER_ID, (this is Discord ID)\
