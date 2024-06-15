@@ -55,7 +55,7 @@ Downloads the image locally, sends to Discord channel, and deletes it.
 Uses [this](https://apexlegendsapi.com/) API to get the data \
 Relevant parameters such as platform and user name added for API to work
 
-# Video Tool
+### Video Tool
 **Does very simple video editing via MoviePY**\
 Can remove background audio, add background music overlay, and extract audio from a video.
 
