@@ -1,6 +1,11 @@
-# A discord bot full of various random tools which is useful to me.\ Uses slash commands.
+# A Discord bot full of various random tools which is useful to me.\ Uses slash commands.
 
-## Requires an .env with these API variables: DISCORD_TOKEN, OWNER_ID, (this is Discord ID) OPENAI_API_KEY and APEX_API_KEY
+## Requires an .env with these API variables:
+DISCORD_TOKEN,\
+OWNER_ID, (this is Discord ID)\
+OPENAI_API_KEY\
+APEX_API_KEY
+
 ## Current features:
 ### Translation:
 Attempts to translate either text or a provided image via facebook's nllb-200-distilled-600M model.  
