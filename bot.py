@@ -4,10 +4,6 @@ import os
 import discord
 import openai
 import requests
-import responses
-from discord import app_commands
-from dotenv import load_dotenv
-from openai import OpenAI
 import button_paginator as pg
 import yandex
 import definition
@@ -19,6 +15,10 @@ import yt_downloader
 import twitter_downloader
 import shazam_functions
 import tiktok
+import translator
+from discord import app_commands
+from dotenv import load_dotenv
+from openai import OpenAI
 
 
 def run_bot():
@@ -448,11 +448,20 @@ def run_bot():
             await interaction.response.send_message("Error generating TTS")
             return
 
-        savePath = "bgm/"+choices.value+"output.mp3"
+        savePath = "bgm/" + choices.value + "output.mp3"
         with open(savePath, 'wb') as file:
             file.write(generate_tts.content)
 
         await interaction.response.send_message(file=discord.File(savePath))
         os.remove(savePath)
+
+    @tree.command(name="translate",
+                  description='Translate text')
+    @app_commands.describe(text="Input text")
+    async def translate(interaction: discord.Interaction, text: str):
+        await interaction.response.defer()
+        result = translator.translate(text)
+
+        await interaction.followup.send(f"`Detected Language:`\n{result[0]}\n`Translation:`\n{result[1]}")
 
     client.run(token=TOKEN)
