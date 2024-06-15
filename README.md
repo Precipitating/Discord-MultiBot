@@ -5,7 +5,7 @@
 Attempts to translate either text or a provided image via facebook's nllb-200-distilled-600M model.  
 Uses tesseract to extract text from images.\
 Requires tesseract to be downloaded to ``C:\Program Files\Tesseract-OCR\tesseract.exe``\
-Requires manual download of [this](https://dl.fbaipublicfiles.com/nllb/lid/lid218e.bin) in the models/ folder due to git limits
+Requires manual download of [this](https://dl.fbaipublicfiles.com/nllb/lid/lid218e.bin) towards the models/ folder due to git limits
 
 ### YouTube Downloader:
 **Downloads videos from YouTube:**\
