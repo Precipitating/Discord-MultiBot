@@ -3,7 +3,6 @@ import helper_functions
 from moviepy.editor import VideoFileClip, AudioFileClip
 from moviepy.audio.AudioClip import CompositeAudioClip
 import numpy as np
-import os
 
 
 def remove_audio(videoPath: str, outputPath: str):

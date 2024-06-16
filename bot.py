@@ -372,7 +372,7 @@ def run_bot():
         await interaction.followup.send(file=discord.File(twitter_downloader.DOWNLOAD_PATH))
         os.remove(twitter_downloader.DOWNLOAD_PATH)
 
-    @tree.command(name="shazam", description='Attempts to identify music via file/YTlink')
+    @tree.command(name="shazam", description='Attempts to identify music via file/YTlink/Twitter')
     @app_commands.describe(link="Enter link")
     @app_commands.describe(file="Audio file")
     async def shazam(interaction: discord.Interaction,
@@ -397,7 +397,7 @@ def run_bot():
                     await interaction.followup.send("Not a valid audio file")
                     return
             elif link is not None:
-                if not helper_functions.is_youtube_link(link):
+                if not (helper_functions.is_youtube_link(link) or helper_functions.is_twitter_link(link)):
                     await interaction.followup.send("Not a YouTube link")
                     return
 
@@ -411,11 +411,19 @@ def run_bot():
 
         # if link is given ONLY
         elif link is not None and file is None:
-            # YouTube -> mp3 to videosoutput folder
-            if yt_downloader.install_mp3(link, shazam_functions.DOWNLOAD_PATH):
-                filePath = shazam_functions.DOWNLOAD_PATH + "output.mp3"
-                # reuse same function as file
+            filePath = shazam_functions.DOWNLOAD_PATH + "output.mp3"
+            if helper_functions.is_youtube_link(link):
+                # YouTube -> mp3 to videosoutput folder
+                if yt_downloader.install_mp3(link, shazam_functions.DOWNLOAD_PATH):
+                    # reuse same function as file
+                    embed = await shazam_functions.file_shazam(filePath)
+            elif helper_functions.is_twitter_link(link):
+                # download to mp4 then convert to mp3
+                twitter_downloader.download(link)
+                video_tools.extract_audio(twitter_downloader.DOWNLOAD_PATH, filePath)
+                # shazam it
                 embed = await shazam_functions.file_shazam(filePath)
+                os.remove(twitter_downloader.DOWNLOAD_PATH)
         else:
             await interaction.followup.send("Only put ONE attachment")
             return
@@ -426,6 +434,7 @@ def run_bot():
 
         await interaction.followup.send(embed=embed)
         os.remove(filePath)
+
 
     # convert languages codes to tts
     tiktokLangCodes = helper_functions.list_to_choice_list(tiktok.TIKTOK_VOICE_CODES)

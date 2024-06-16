@@ -1,5 +1,4 @@
 import bs4
-import discord.app_commands.errors
 import requests
 from typing import Final
 
@@ -30,3 +29,4 @@ def download(link: str):
 
     print("DOWNLOADED FILE")
     return True
+
