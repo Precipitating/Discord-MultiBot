@@ -417,12 +417,12 @@ def run_bot():
                 if yt_downloader.install_mp3(link, shazam_functions.DOWNLOAD_PATH):
                     # reuse same function as file
                     embed = await shazam_functions.file_shazam(filePath)
+                    os.remove(filePath)
             elif helper_functions.is_twitter_link(link):
-                # download to mp4 then convert to mp3
+                # ShazamIO works on MP4 so download twitter video and use that as input
                 twitter_downloader.download(link)
-                video_tools.extract_audio(twitter_downloader.DOWNLOAD_PATH, filePath)
                 # shazam it
-                embed = await shazam_functions.file_shazam(filePath)
+                embed = await shazam_functions.file_shazam(twitter_downloader.DOWNLOAD_PATH)
                 os.remove(twitter_downloader.DOWNLOAD_PATH)
         else:
             await interaction.followup.send("Only put ONE attachment")
@@ -433,7 +433,7 @@ def run_bot():
             return
 
         await interaction.followup.send(embed=embed)
-        os.remove(filePath)
+
 
 
     # convert languages codes to tts
