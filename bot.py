@@ -1,10 +1,11 @@
 import urllib.request
-from typing import Final, Optional, List
+from typing import Final, Optional
 import os
 import discord
 import openai
 import requests
 import button_paginator as pg
+import voice
 import yandex
 import definition
 import twitter_embedder
@@ -333,7 +334,8 @@ def run_bot():
             result = yt_downloader.install_mp3(link, yt_downloader.OUTPUT_PATH)
 
         if not result:
-            await interaction.followup.send("Error, either age restricted or the video is too long")
+            await interaction.followup.send(
+                "Error, either age restricted, video is too long or you sent a youtube clip")
             return
 
         # if hosting video to site is success, send url
@@ -434,8 +436,6 @@ def run_bot():
 
         await interaction.followup.send(embed=embed)
 
-
-
     # convert languages codes to tts
     tiktokLangCodes = helper_functions.list_to_choice_list(tiktok.TIKTOK_VOICE_CODES)
 
@@ -496,5 +496,34 @@ def run_bot():
         if img:
             os.remove(savePath)
         await interaction.followup.send(f"`Detected Language:`\n{result[0]}\n`Translation:`\n{result[1]}")
+
+    @tree.command(name="voice_record", description='Record a voice channel')
+    @app_commands.choices(choices=[app_commands.Choice(name="Start", value=1),
+                                   app_commands.Choice(name="Stop", value=2),
+                                   ])
+    async def voice_record(interaction: discord.Interaction, choices: app_commands.Choice[int]):
+        # start recording the channel the user is in
+        if choices.value == 1:
+            if interaction.user.voice and not interaction.guild.voice_client:
+                await voice.start_voice_recording(interaction)
+                voice.auto_leave_vc.start(interaction)
+                await interaction.response.send_message("Started recording...")
+            else:
+                await interaction.response.send_message("User not in VC or bot is already recording")
+        # disconnect bot
+        elif choices.value == 2:
+            if interaction.guild.voice_client:
+                await voice.stop_voice_recording(interaction)
+                await interaction.response.send_message(file=discord.File(voice.AUDIO_SAVE_PATH))
+                voice.auto_leave_vc.stop()
+                os.remove(voice.AUDIO_SAVE_PATH)
+            else:
+                await interaction.response.send_message("Bot is not in a channel")
+
+
+        else:
+            print("Error")
+
+
 
     client.run(token=TOKEN)

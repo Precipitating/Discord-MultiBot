@@ -25,8 +25,8 @@ async def install_mp4(link: str):
         vid.download(filename=OUTPUT_NAME+'.mp4', output_path=OUTPUT_PATH)
         print("mp4 downloaded")
 
-    except pytube.exceptions.AgeRestrictedError:
-        print("age restricted video")
+    except:
+        print("Error converting link to mp4")
         return None
 
     # try hosting on a site if over 25mb
