@@ -69,6 +69,13 @@ Can remove background audio, add background music overlay, and extract audio fro
 **Defines a word using [this](https://dictionaryapi.dev/) API**\
 Self explanatory, wants a Discord input, gives the result.
 
+### Voice Record:
+**Record a voice channel and output the mp3 when manually stopped**
+Uses [this](https://github.com/imayhaveborkedit/discord-ext-voice-recv) library, although not stable and can break.
+Audio could be corrupted, and sound off if there are multiple audio sources.
+
+
+
 
 
 
