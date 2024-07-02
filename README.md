@@ -71,8 +71,12 @@ Self explanatory, wants a Discord input, gives the result.
 
 ### Voice Record:
 **Record a voice channel and output the mp3 when manually stopped**
-Uses [this](https://github.com/imayhaveborkedit/discord-ext-voice-recv) library, although not stable and can break.
-Audio could be corrupted, and sound off if there are multiple audio sources.
+Uses [this](https://github.com/imayhaveborkedit/discord-ext-voice-recv) library. Only works for one speaker, as any other input will cause problems to the audio file.
+
+## Face Swap:
+**Swaps faces of two people (Swap choice) or replaces every face in an image with a source image (Replace)**
+Uses [this]https://github.com/deepinsight/insightface library. 
+
 
 
 
