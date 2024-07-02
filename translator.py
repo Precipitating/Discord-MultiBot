@@ -247,8 +247,7 @@ def extract_image_text(imgPath: str, desiredLang: str):
     extractedText = pyt.pytesseract.image_to_string(img)
     removedNewLine = ' '.join(extractedText.split())
     print(removedNewLine)
-    return translate(removedNewLine,desiredLang)
-
+    return translate(removedNewLine, desiredLang)
 
 
 async def lang_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:

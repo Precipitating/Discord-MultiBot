@@ -10,6 +10,8 @@ async def start_voice_recording(interaction: discord.Interaction):
     vc = await interaction.user.voice.channel.connect(cls=voice_recv.VoiceRecvClient)
     vc.listen(voice_recv.SilenceGeneratorSink(voice_recv.FFmpegSink(filename=AUDIO_SAVE_PATH)))
 
+    return vc
+
 
 async def stop_voice_recording(interaction: discord.Interaction):
     await interaction.guild.voice_client.disconnect()

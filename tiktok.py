@@ -1,6 +1,4 @@
 from typing import Final, Dict, List
-import discord
-from discord import app_commands
 
 TIKTOK_VOICE_CODES: Final[List[Dict[str, str]]] = [
     # DISNEY VOICES

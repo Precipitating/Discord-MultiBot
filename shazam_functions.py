@@ -1,6 +1,5 @@
 from typing import Final
-import shazamio_core
-from shazamio import Shazam, Serialize
+from shazamio import Shazam
 import discord
 
 DOWNLOAD_PATH: Final[str] = "bgm/"

@@ -17,6 +17,7 @@ import twitter_downloader
 import shazam_functions
 import tiktok
 import translator
+import face_swapper
 from discord import app_commands
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -384,7 +385,6 @@ def run_bot():
         # discord embed object if success, else None
         embed = None
         filePath = None
-
         # START
         await interaction.response.defer()
         # return an error msg if no files provided
@@ -502,10 +502,11 @@ def run_bot():
                                    app_commands.Choice(name="Stop", value=2),
                                    ])
     async def voice_record(interaction: discord.Interaction, choices: app_commands.Choice[int]):
+
         # start recording the channel the user is in
         if choices.value == 1:
             if interaction.user.voice and not interaction.guild.voice_client:
-                await voice.start_voice_recording(interaction)
+                vc = await voice.start_voice_recording(interaction)
                 voice.auto_leave_vc.start(interaction)
                 await interaction.response.send_message("Started recording...")
             else:
@@ -520,10 +521,35 @@ def run_bot():
             else:
                 await interaction.response.send_message("Bot is not in a channel")
 
-
         else:
             print("Error")
 
+    @tree.command(name="face_swap", description='Replace a source face with every face in img2 OR do a direct 1-1 '
+                                                'face swap')
+    @app_commands.choices(choices=[app_commands.Choice(name="Replace", value=1),
+                                   app_commands.Choice(name="Swap", value=2),
+                                   ])
+    @app_commands.describe(img="input first face to swap")
+    @app_commands.describe(img2="input second face to sawp")
+    async def face_swap(interaction: discord.Interaction, choices: app_commands.Choice[int],
+                        img: discord.Attachment,
+                        img2: discord.Attachment):
+        await interaction.response.defer()
+        # return early if both files are not images
+        if not (helper_functions.is_image(img) and helper_functions.is_image(img2)):
+            await interaction.followup.send("One file is not an image format")
+            return
 
+        imgToBytes = await img.read()
+        img2ToBytes = await img2.read()
+        # detect
+        result = await face_swapper.swap_face(interaction, imgToBytes, img2ToBytes, choices.value)
+
+        if result != -1:
+            await interaction.followup.send(file=discord.File(face_swapper.FACE_SWAP_SAVE_PATH))
+            os.remove(face_swapper.FACE_SWAP_SAVE_PATH)
+            if choices.value == 2:
+                await interaction.followup.send(file=discord.File(face_swapper.FACE_SWAP_SAVE_PATH2))
+                os.remove(face_swapper.FACE_SWAP_SAVE_PATH2)
 
     client.run(token=TOKEN)

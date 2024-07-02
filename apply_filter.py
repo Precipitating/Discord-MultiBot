@@ -35,9 +35,6 @@ CHILL_Y_MULTIPLIER_MOUTH: Final[float] = 0.1
 IMG_PATH: Final[str] = "img/filtered_img.png"
 
 
-
-
-
 def load_image(img: bytes) -> Union[np.ndarray, None]:
     # decode to a readable format for OpenCV
     imageArray = np.frombuffer(img, np.uint8)
@@ -131,7 +128,7 @@ def apply(img: Union[np.ndarray, None], selectedFilter: str) -> bool:
 
     save_image(img)
 
-   # cv2.imshow('Window', img)
+    #cv2.imshow('Window', img)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
