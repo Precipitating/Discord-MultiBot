@@ -74,7 +74,7 @@ Self explanatory, wants a Discord input, gives the result.
 Uses [this](https://github.com/imayhaveborkedit/discord-ext-voice-recv) library. Only works for one speaker, as any other input will cause problems to the audio file.
 
 ## Face Swap:
-**Swaps faces of two people (Swap choice) or replaces every face in an image with a source image (Replace)**
+**Swaps faces of two people (Swap choice) or replaces every face in an image with a source image (Replace)**\
 Uses [this](https://github.com/deepinsight/insightface) library. 
 
 
