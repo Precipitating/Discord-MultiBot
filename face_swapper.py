@@ -31,14 +31,10 @@ async def swap_face(interaction: discord.Interaction, img1: bytes, img2: bytes, 
     destinationFaces = app.get(decodedImg2)
 
     if choices == 1:
-        if len(sourceFace) > 1:
-            await interaction.followup.send("Source image has over 1 face detected")
+        if len(sourceFace) == 0 or len(destinationFaces) == 0:
+            await interaction.followup.send("Either both images have no faces detected, or one face is not detected "
+                                            "in an img")
             return -1
-
-        if len(destinationFaces) == 0:
-            await interaction.followup.send("Destination image has no faces detected")
-            return -1
-
         sourceFace = sourceFace[0]
         for face in destinationFaces:
             decodedImg2 = swapper.get(decodedImg2, face, sourceFace, paste_back=True)
@@ -49,7 +45,7 @@ async def swap_face(interaction: discord.Interaction, img1: bytes, img2: bytes, 
         if len(sourceFace) > 1 and len(destinationFaces) > 1:
             await interaction.followup.send("Make sure both images have one face")
             return -1
-        if len(sourceFace) == 0 ^ len(destinationFaces) == 0:
+        if len(sourceFace) == 0 or len(destinationFaces) == 0:
             await interaction.followup.send("Either both images have no faces detected, or one face is not detected "
                                             "in an img")
             return -1
