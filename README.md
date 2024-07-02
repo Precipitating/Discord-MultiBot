@@ -75,7 +75,7 @@ Uses [this](https://github.com/imayhaveborkedit/discord-ext-voice-recv) library.
 
 ## Face Swap:
 **Swaps faces of two people (Swap choice) or replaces every face in an image with a source image (Replace)**
-Uses [this]https://github.com/deepinsight/insightface library. 
+Uses [this](https://github.com/deepinsight/insightface) library. 
 
 
 
